@@ -86,7 +86,7 @@ class RegistrationRoute(implicit am: ActorMaterializer) extends BaseJsonHandler 
 
                               result match {
                                 case Right(_) =>
-                                  complete(GenericResponse(StatusCodes.OK.intValue, null, Response(s"No DeviceDetails exists for $deviceId given this used returning 200", null)))
+                                  complete(GenericResponse(StatusCodes.OK.intValue, null, Response(s"No DeviceDetails exists for $deviceId returning 200", null)))
                                 case Left(d) =>
                                   complete(GenericResponse(StatusCodes.OK.intValue, null, Response(s"DeviceDetails updated for $deviceId", d)))
                               }
