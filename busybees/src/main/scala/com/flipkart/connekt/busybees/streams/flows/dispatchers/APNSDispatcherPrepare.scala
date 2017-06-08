@@ -31,7 +31,7 @@ class APNSDispatcherPrepare extends MapFlowStage[APSPayloadEnvelope, (SimpleApns
     try {
       val payload = envelope.apsPayload.asInstanceOf[iOSPNPayload]
 
-      ConnektLogger(LogFile.PROCESSORS).debug("APNSDispatcherPrepare received message: {}", supplier(envelope.messageId))
+      ConnektLogger(LogFile.PROCESSORS).info("APNSDispatcherPrepare received message: {}", supplier(envelope.messageId))
       ConnektLogger(LogFile.PROCESSORS).trace("APNSDispatcherPrepare received message: {}", supplier(envelope))
 
       val pushNotification = new SimpleApnsPushNotification(payload.token, payload.topic, payload.data, new Date(payload.expiryInMillis))

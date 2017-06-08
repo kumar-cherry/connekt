@@ -109,6 +109,7 @@ class APNSDispatcher(parallelism: Int)(implicit ec: ExecutionContextExecutor) {
         val result = Promise[(Try[PushNotificationResponse[SimpleApnsPushNotification]], APNSRequestTracker)]()
 
         val gatewayFuture = cachedGateway(userContext.appName)
+        ConnektLogger(LogFile.PROCESSORS).info(s"APNSDispatcher SENDING REQUEST : ${userContext.messageId}")
 
         gatewayFuture
           .flatMap(client => client.sendNotification(request).asScala.recoverWith {

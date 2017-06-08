@@ -58,6 +58,7 @@ class IOSChannelFormatter(parallelism: Int)(implicit ec: ExecutionContextExecuto
 
       if (apnsEnvelopes.nonEmpty && ttlInMillis > System.currentTimeMillis()) {
         if (!message.isTestRequest) {
+          ConnektLogger(LogFile.PROCESSORS).info(s"IOSChannelFormatter for message: ${message.id} done")
           apnsEnvelopes
         }
         else {
