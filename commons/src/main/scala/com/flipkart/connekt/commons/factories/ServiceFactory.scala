@@ -83,6 +83,7 @@ object ServiceFactory {
       case Channel.PUSH => serviceCache(ServiceType.PN_MESSAGE).asInstanceOf[TMessageService]
       case Channel.EMAIL => serviceCache(ServiceType.EMAIL_MESSAGE).asInstanceOf[TMessageService]
       case Channel.SMS => serviceCache(ServiceType.SMS_MESSAGE).asInstanceOf[TMessageService]
+      case Channel.PULL => serviceCache(ServiceType.PULL_MESSAGE).asInstanceOf[TMessageService]
     }
   }
 

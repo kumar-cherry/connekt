@@ -48,7 +48,7 @@ case class ConnektRequest(@JsonProperty(required = false) id: String,
   }
 
   @JsonIgnore
-  def isTestRequest : Boolean = meta.get("x-perf-test").exists(v => v.trim.equalsIgnoreCase("true"))
+  def isTestRequest: Boolean = meta.get("x-perf-test").exists(v => v.trim.equalsIgnoreCase("true"))
 
   def getComputedChannelData(implicit stencilService: TStencilService): ChannelRequestData =
     stencilId.map(stencilService.get(_)).map { stencil =>
@@ -56,6 +56,8 @@ case class ConnektRequest(@JsonProperty(required = false) id: String,
         case Channel.PUSH =>
           val pushType = if (channelData != null) channelData.asInstanceOf[PNRequestData].pushType else null
           PNRequestData(pushType = pushType, data = stencilService.materialize(stencil.head, channelDataModel).asInstanceOf[String].getObj[ObjectNode])
+        case Channel.PULL =>
+          PullRequestData(data = stencilService.materialize(stencil.filter(_.component.equalsIgnoreCase("data")).head, channelDataModel).asInstanceOf[ObjectNode])
         case Channel.SMS =>
           SmsRequestData(body = stencilService.materialize(stencil.head, channelDataModel).asInstanceOf[String])
         case Channel.EMAIL =>

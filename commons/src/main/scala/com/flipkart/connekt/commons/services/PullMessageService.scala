@@ -12,22 +12,21 @@
  */
 package com.flipkart.connekt.commons.services
 
-import com.flipkart.connekt.commons.dao.{MessageMetaData, TRequestDao}
-import com.flipkart.connekt.commons.factories.{ConnektLogger, LogFile, ServiceFactory}
-import com.flipkart.connekt.commons.iomodels.{ConnektRequest, PullCallbackEvent, PullRequestData, PullRequestInfo}
-import com.flipkart.connekt.commons.utils.StringUtils.generateUUID
-import com.roundeights.hasher.Implicits._
 import com.flipkart.connekt.commons.core.Wrappers._
+import com.flipkart.connekt.commons.dao.{MessageMetaData, TRequestDao}
+import com.flipkart.connekt.commons.entities.AppUser
+import com.flipkart.connekt.commons.entities.Channel.Channel
+import com.flipkart.connekt.commons.factories.{ConnektLogger, LogFile, ServiceFactory}
 import com.flipkart.connekt.commons.helpers.CallbackRecorder._
 import com.flipkart.connekt.commons.helpers.ConnektRequestHelper._
-import com.fasterxml.jackson.databind.node.ObjectNode
+import com.flipkart.connekt.commons.iomodels.{ConnektRequest, PullCallbackEvent, PullRequestData, PullRequestInfo}
+import com.flipkart.connekt.commons.utils.StringUtils.{generateUUID, _}
+import org.apache.commons.lang.RandomStringUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-import com.flipkart.connekt.commons.utils.StringUtils._
-import org.apache.commons.lang.RandomStringUtils
 
-class PullMessageService(requestDao: TRequestDao) extends TService {
+class PullMessageService(requestDao: TRequestDao) extends TService with TMessageService {
   private val messageDao: TRequestDao = requestDao
   private lazy val stencilService = ServiceFactory.getStencilService
 
@@ -40,8 +39,7 @@ class PullMessageService(requestDao: TRequestDao) extends TService {
       // read and createTS will be removed after migration Completes
       val read = pullData.data.get("read") != null && pullData.data.get("read").asBoolean()
       val createTS = Option(pullData.data.get("generationTime")).map(_.asLong).getOrElse(System.currentTimeMillis())
-      if (!request.isTestRequest)
-      {
+      if (!request.isTestRequest) {
         messageDao.saveRequest(reqWithId.id, reqWithId, true)
         pullInfo.userIds.map(
           ServiceFactory.getPullMessageQueueService.enqueueMessage(reqWithId.appName, _, reqWithId.id, reqWithId.expiryTs, Some(read), Some(createTS))
@@ -103,14 +101,44 @@ class PullMessageService(requestDao: TRequestDao) extends TService {
 
   def saveCallbackEvent(appName: String, messages: List[ConnektRequest], contactIdentifier: String, filter: Map[String, Any], eventType: String) = {
     messages.map(msg => {
-        PullCallbackEvent(
-          messageId = msg.id,
-          contactId = contactIdentifier,
-          eventId = RandomStringUtils.randomAlphabetic(10),
-          clientId = filter.get("client").toString,
-          contextId = msg.contextId.getOrElse(""),
-          appName = appName,
-          eventType = eventType)
-      }).persist
+      PullCallbackEvent(
+        messageId = msg.id,
+        contactId = contactIdentifier,
+        eventId = RandomStringUtils.randomAlphabetic(10),
+        clientId = filter.get("client").toString,
+        contextId = msg.contextId.getOrElse(""),
+        appName = appName,
+        eventType = eventType)
+    }).persist
   }
+
+  override def saveRequest(request: ConnektRequest, requestBucket: String, persistPayloadInDataStore: Boolean): Try[String] = ???
+
+  override def getRequestBucket(request: ConnektRequest, client: AppUser): String = ???
+
+  override def assignClientChannelTopic(channel: Channel, clientUserId: String): String = ???
+
+  override def getClientChannelTopic(channel: Channel, clientUserId: String): String = ???
+
+  override def enqueueRequest(request: ConnektRequest, requestBucket: String): Unit = ???
+
+  override def getRequestInfo(id: String): Try[Option[ConnektRequest]] = {
+    try {
+      Success(requestDao.fetchRequest(List(id)).headOption)
+    } catch {
+      case e: Exception =>
+        ConnektLogger(LogFile.SERVICE).error(s"Get request info failed ${e.getMessage}", e)
+        Failure(e)
+    }
+  }
+
+  override def getRequestInfo(ids: List[String]): Try[List[ConnektRequest]] = ???
+
+  override def addClientTopic(topicName: String, numPartitions: Int, replicationFactor: Int): Try[Unit] = ???
+
+  override def partitionEstimate(qpsBound: Int): Int = ???
+
+  override def getKafkaTopicNames(channel: Channel): Try[Seq[String]] = ???
+
+  override def getTopicNames(channel: Channel, platform: Option[String]): Try[Seq[String]] = ???
 }

@@ -346,6 +346,10 @@ class SendRoute(implicit am: ActorMaterializer) extends BaseJsonHandler {
                                   Option(r.meta).getOrElse(Map.empty[String, String]) ++ headers
                                 }, channelInfo =
                                   r.channelInfo.asInstanceOf[PullRequestInfo].copy(appName = appName.toLowerCase)
+                                  , channelData = Option(r.channelData) match {
+                                    case Some(PullRequestData(pnData)) if pnData != null => r.channelData
+                                    case _ => r.getComputedChannelData
+                                  }
                                 )
                                 request.validate
 
