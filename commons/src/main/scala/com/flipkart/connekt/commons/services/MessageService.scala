@@ -25,19 +25,18 @@ import com.flipkart.connekt.commons.services.SchedulerService.ScheduledRequest
 import com.flipkart.connekt.commons.utils.StringUtils._
 import com.roundeights.hasher.Implicits._
 import com.typesafe.config.Config
-import kafka.utils.{ZKStringSerializer, ZkUtils}
-import org.I0Itec.zkclient.ZkClient
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
-class MessageService(requestDao: TRequestDao, userConfigurationDao: TUserConfiguration, queueProducerHelper: KafkaProducerHelper, kafkaConsumerConf: Config, schedulerService: SchedulerService) extends TMessageService with KafkaConnectionHelper {
+class MessageService(requestDao: TRequestDao, userConfigurationDao: TUserConfiguration, queueProducerHelper: KafkaProducerHelper, kafkaConsumerConf: Config, schedulerService: SchedulerService) extends TKafkaService with THbaseService with TDataStoreSaveService with KafkaConnectionHelper {
 
   private val messageDao: TRequestDao = requestDao
   private val queueProducer: KafkaProducerHelper = queueProducerHelper
   private val clientRequestTopics = scala.collection.mutable.Map[String, String]()
 
-  override def saveRequest(request: ConnektRequest, requestBucket: String, persistPayloadInDataStore: Boolean): Try[String] = {
+  def saveRequest(request: ConnektRequest, requestBucket: String, persistPayloadInDataStore: Boolean): Try[String] = {
     try {
       val reqWithId = request.copy(id = generateUUID)
       request.scheduleTs match {
@@ -115,4 +114,6 @@ class MessageService(requestDao: TRequestDao, userConfigurationDao: TUserConfigu
       case None => appUserConfigs
     }).map(_.queueName).intersect(getKafkaTopicNames(channel).get)
   }
+
+  override def saveRequest(request: ConnektRequest, persistPayloadInDataStore: Boolean)(implicit ec: ExecutionContext): Try[String] = ???
 }

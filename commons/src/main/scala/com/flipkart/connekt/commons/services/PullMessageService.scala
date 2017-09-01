@@ -26,11 +26,11 @@ import org.apache.commons.lang.RandomStringUtils
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-class PullMessageService(requestDao: TRequestDao) extends TService with TMessageService {
+class PullMessageService(requestDao: TRequestDao) extends THbaseService with TService with TDataStoreSaveService {
   private val messageDao: TRequestDao = requestDao
   private lazy val stencilService = ServiceFactory.getStencilService
 
-  def saveRequest(request: ConnektRequest)(implicit ec: ExecutionContext): Try[String] = {
+  override def saveRequest(request: ConnektRequest, persistPayloadInDataStore: Boolean = true)(implicit ec: ExecutionContext): Try[String] = {
     Try_#(message = "PullMessageService.saveRequest: Failed to save pull request ") {
       val reqWithId = request.copy(id = generateUUID)
       val pullInfo = request.channelInfo.asInstanceOf[PullRequestInfo]
@@ -40,7 +40,7 @@ class PullMessageService(requestDao: TRequestDao) extends TService with TMessage
       val read = pullData.data.get("read") != null && pullData.data.get("read").asBoolean()
       val createTS = Option(pullData.data.get("generationTime")).map(_.asLong).getOrElse(System.currentTimeMillis())
       if (!request.isTestRequest) {
-        messageDao.saveRequest(reqWithId.id, reqWithId, true)
+        messageDao.saveRequest(reqWithId.id, reqWithId, persistPayloadInDataStore)
         pullInfo.userIds.map(
           ServiceFactory.getPullMessageQueueService.enqueueMessage(reqWithId.appName, _, reqWithId.id, reqWithId.expiryTs, Some(read), Some(createTS))
         )
@@ -54,7 +54,7 @@ class PullMessageService(requestDao: TRequestDao) extends TService with TMessage
     pendingMessages.map(queueMessages => {
       val messageMap = queueMessages.toMap
       val distinctMessageIds = queueMessages.map(_._1).distinct
-      val fetchedMessages: Try[List[ConnektRequest]] = getRequestbyIds(distinctMessageIds.toList)
+      val fetchedMessages: Try[List[ConnektRequest]] = getRequestInfo(distinctMessageIds.toList)
 
       val sortedMessages: Try[Seq[ConnektRequest]] = fetchedMessages.map { _messages =>
         val mIdRequestMap = _messages.map(r => r.id -> r).toMap
@@ -69,12 +69,6 @@ class PullMessageService(requestDao: TRequestDao) extends TService with TMessage
       }
       (filteredMessages, messageMap)
     })
-  }
-
-  def getRequestbyIds(ids: List[String]): Try[List[ConnektRequest]] = {
-    Try_#(message = "PullMessageService.getRequestbyIds: Failed to get pull requests") {
-      requestDao.fetchRequest(ids)
-    }
   }
 
   def markAsRead(appName: String, contactIdentifier: String, filter: Map[String, Any])(implicit ec: ExecutionContext) = {
@@ -93,7 +87,7 @@ class PullMessageService(requestDao: TRequestDao) extends TService with TMessage
   }
 
   def writeCallbackEvent(appName: String, contactIdentifier: String, messageIds: List[String], filter: Map[String, Any]) = {
-    val fetchedMessages: Try[List[ConnektRequest]] = getRequestbyIds(messageIds)
+    val fetchedMessages: Try[List[ConnektRequest]] = getRequestInfo(messageIds)
     fetchedMessages.map { _messages =>
       saveCallbackEvent(appName, _messages, contactIdentifier, filter, "DELETE")
     }
@@ -112,16 +106,6 @@ class PullMessageService(requestDao: TRequestDao) extends TService with TMessage
     }).persist
   }
 
-  override def saveRequest(request: ConnektRequest, requestBucket: String, persistPayloadInDataStore: Boolean): Try[String] = ???
-
-  override def getRequestBucket(request: ConnektRequest, client: AppUser): String = ???
-
-  override def assignClientChannelTopic(channel: Channel, clientUserId: String): String = ???
-
-  override def getClientChannelTopic(channel: Channel, clientUserId: String): String = ???
-
-  override def enqueueRequest(request: ConnektRequest, requestBucket: String): Unit = ???
-
   override def getRequestInfo(id: String): Try[Option[ConnektRequest]] = {
     try {
       Success(requestDao.fetchRequest(List(id)).headOption)
@@ -132,13 +116,16 @@ class PullMessageService(requestDao: TRequestDao) extends TService with TMessage
     }
   }
 
-  override def getRequestInfo(ids: List[String]): Try[List[ConnektRequest]] = ???
+  override def getRequestInfo(ids: List[String]): Try[List[ConnektRequest]] = {
+    try {
+      Success(requestDao.fetchRequest(ids))
+    } catch {
+      case e: Exception =>
+        ConnektLogger(LogFile.SERVICE).error(s"Get request info failed ${e.getMessage}", e)
+        Failure(e)
+    }
+  }
 
-  override def addClientTopic(topicName: String, numPartitions: Int, replicationFactor: Int): Try[Unit] = ???
+  override def saveRequest(request: ConnektRequest, requestBucket: String, persistPayloadInDataStore: Boolean): Try[String] = ???
 
-  override def partitionEstimate(qpsBound: Int): Int = ???
-
-  override def getKafkaTopicNames(channel: Channel): Try[Seq[String]] = ???
-
-  override def getTopicNames(channel: Channel, platform: Option[String]): Try[Seq[String]] = ???
 }

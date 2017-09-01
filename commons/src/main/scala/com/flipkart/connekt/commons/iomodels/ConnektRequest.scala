@@ -57,7 +57,7 @@ case class ConnektRequest(@JsonProperty(required = false) id: String,
           val pushType = if (channelData != null) channelData.asInstanceOf[PNRequestData].pushType else null
           PNRequestData(pushType = pushType, data = stencilService.materialize(stencil.head, channelDataModel).asInstanceOf[String].getObj[ObjectNode])
         case Channel.PULL =>
-          PullRequestData(data = stencilService.materialize(stencil.filter(_.component.equalsIgnoreCase("data")).head, channelDataModel).asInstanceOf[ObjectNode])
+          PullRequestData(data = stencilService.materialize(stencil.filter(_.component.equalsIgnoreCase("data")).head, channelDataModel).asInstanceOf[String].getObj[ObjectNode])
         case Channel.SMS =>
           SmsRequestData(body = stencilService.materialize(stencil.head, channelDataModel).asInstanceOf[String])
         case Channel.EMAIL =>

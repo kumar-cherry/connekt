@@ -26,7 +26,7 @@ object ServiceFactory {
 
   var serviceCache = Map[ServiceType.Value, TService]()
 
-  def initPNMessageService(requestDao: PNRequestDao, userConfiguration: TUserConfiguration, queueProducerHelper: KafkaProducerHelper, kafkaConsumerConfig: Config, schedulerService: SchedulerService) = {
+  def initPNMessageService(requestDao: PNRequestDao, userConfiguration: TUserConfiguration, queueProducerHelper: KafkaProducerHelper, kafkaConsumerConfig: Config, schedulerService: SchedulerService): Unit = {
     serviceCache += ServiceType.PN_MESSAGE -> new MessageService(requestDao, userConfiguration, queueProducerHelper, kafkaConsumerConfig, schedulerService)
   }
 
@@ -34,24 +34,24 @@ object ServiceFactory {
     serviceCache += ServiceType.EMAIL_MESSAGE -> new MessageService(requestDao, userConfiguration, queueProducerHelper, kafkaConsumerConfig, null)
   }
 
-  def initSMSMessageService(requestDao: SmsRequestDao, userConfiguration: TUserConfiguration, queueProducerHelper: KafkaProducerHelper, kafkaConsumerConfig: Config, schedulerService: SchedulerService) = {
+  def initSMSMessageService(requestDao: SmsRequestDao, userConfiguration: TUserConfiguration, queueProducerHelper: KafkaProducerHelper, kafkaConsumerConfig: Config, schedulerService: SchedulerService): Unit = {
     serviceCache += ServiceType.SMS_MESSAGE -> new MessageService(requestDao, userConfiguration, queueProducerHelper, kafkaConsumerConfig, schedulerService)
   }
 
-  def initPULLMessageService(requestDao: PullRequestDao) = {
+  def initPULLMessageService(requestDao: PullRequestDao): Unit = {
     serviceCache += ServiceType.PULL_MESSAGE -> new PullMessageService(requestDao)
   }
 
-  def initCallbackService(eventsDao: EventsDaoContainer, requestDao: RequestDaoContainer, queueProducerHelper: KafkaProducerHelper) = {
+  def initCallbackService(eventsDao: EventsDaoContainer, requestDao: RequestDaoContainer, queueProducerHelper: KafkaProducerHelper): Unit = {
     serviceCache += ServiceType.CALLBACK -> new CallbackService(eventsDao, requestDao, queueProducerHelper)
   }
 
-  def initAuthorisationService(priv: PrivDao, userInfo: TUserInfo) = {
+  def initAuthorisationService(priv: PrivDao, userInfo: TUserInfo): Unit = {
     serviceCache += ServiceType.AUTHORISATION -> new AuthorisationService(priv, userInfo)
     serviceCache += ServiceType.USER_INFO -> new UserInfoService(userInfo)
   }
 
-  def initStorageService(dao: TKeyChainDao) = {
+  def initStorageService(dao: TKeyChainDao): Unit = {
     serviceCache += ServiceType.KEY_CHAIN -> new KeyChainService(dao)
   }
 
@@ -78,38 +78,38 @@ object ServiceFactory {
     serviceCache += ServiceType.PULL_QUEUE -> new MessageQueueService(dao, config.getConfig("hbase.pull").getInt("ttl").days.toMillis, config.getConfig("hbase.pull").getInt("maxRecords"))
   }
 
-  def getMessageService(channel: Channel): TMessageService = {
+  def getMessageService(channel: Channel): TService = {
     channel match {
-      case Channel.PUSH => serviceCache(ServiceType.PN_MESSAGE).asInstanceOf[TMessageService]
-      case Channel.EMAIL => serviceCache(ServiceType.EMAIL_MESSAGE).asInstanceOf[TMessageService]
-      case Channel.SMS => serviceCache(ServiceType.SMS_MESSAGE).asInstanceOf[TMessageService]
-      case Channel.PULL => serviceCache(ServiceType.PULL_MESSAGE).asInstanceOf[TMessageService]
+      case Channel.PUSH => serviceCache(ServiceType.PN_MESSAGE)
+      case Channel.EMAIL => serviceCache(ServiceType.EMAIL_MESSAGE)
+      case Channel.SMS => serviceCache(ServiceType.SMS_MESSAGE)
+      case Channel.PULL => serviceCache(ServiceType.PULL_MESSAGE)
     }
   }
 
-  def getPullMessageService = serviceCache(ServiceType.PULL_MESSAGE).asInstanceOf[PullMessageService]
+  def getPullMessageService: PullMessageService = serviceCache(ServiceType.PULL_MESSAGE).asInstanceOf[PullMessageService]
 
-  def getMessageQueueService = serviceCache(ServiceType.FETCH_PUSH_QUEUE).asInstanceOf[MessageQueueService]
+  def getMessageQueueService: MessageQueueService = serviceCache(ServiceType.FETCH_PUSH_QUEUE).asInstanceOf[MessageQueueService]
 
-  def getPullMessageQueueService = serviceCache(ServiceType.PULL_QUEUE).asInstanceOf[MessageQueueService]
+  def getPullMessageQueueService: MessageQueueService = serviceCache(ServiceType.PULL_QUEUE).asInstanceOf[MessageQueueService]
 
-  def initStencilService(dao: TStencilDao) = serviceCache += ServiceType.STENCIL -> new StencilService(dao)
+  def initStencilService(dao: TStencilDao): Unit = serviceCache += ServiceType.STENCIL -> new StencilService(dao)
 
-  def getSchedulerService = serviceCache(ServiceType.SCHEDULER).asInstanceOf[SchedulerService]
+  def getSchedulerService: SchedulerService = serviceCache(ServiceType.SCHEDULER).asInstanceOf[SchedulerService]
 
-  def getCallbackService = serviceCache(ServiceType.CALLBACK).asInstanceOf[TCallbackService]
+  def getCallbackService: TCallbackService = serviceCache(ServiceType.CALLBACK).asInstanceOf[TCallbackService]
 
-  def getAuthorisationService = serviceCache(ServiceType.AUTHORISATION).asInstanceOf[TAuthorisationService]
+  def getAuthorisationService: TAuthorisationService = serviceCache(ServiceType.AUTHORISATION).asInstanceOf[TAuthorisationService]
 
-  def getUserInfoService = serviceCache(ServiceType.USER_INFO).asInstanceOf[UserInfoService]
+  def getUserInfoService: UserInfoService = serviceCache(ServiceType.USER_INFO).asInstanceOf[UserInfoService]
 
-  def getKeyChainService = serviceCache(ServiceType.KEY_CHAIN).asInstanceOf[TStorageService]
+  def getKeyChainService: TStorageService = serviceCache(ServiceType.KEY_CHAIN).asInstanceOf[TStorageService]
 
-  def getReportingService = serviceCache(ServiceType.STATS_REPORTING).asInstanceOf[ReportingService]
+  def getReportingService: ReportingService = serviceCache(ServiceType.STATS_REPORTING).asInstanceOf[ReportingService]
 
-  def getStencilService = serviceCache(ServiceType.STENCIL).asInstanceOf[StencilService]
+  def getStencilService: StencilService = serviceCache(ServiceType.STENCIL).asInstanceOf[StencilService]
 
-  def getUserProjectConfigService = serviceCache(ServiceType.APP_CONFIG).asInstanceOf[UserProjectConfigService]
+  def getUserProjectConfigService: UserProjectConfigService = serviceCache(ServiceType.APP_CONFIG).asInstanceOf[UserProjectConfigService]
 
 }
 

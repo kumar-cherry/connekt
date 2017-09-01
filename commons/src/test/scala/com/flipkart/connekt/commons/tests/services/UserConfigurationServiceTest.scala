@@ -16,7 +16,7 @@ import java.util.UUID
 
 import com.flipkart.connekt.commons.entities.{AppUserConfiguration, Channel, MobilePlatform}
 import com.flipkart.connekt.commons.factories.ServiceFactory
-import com.flipkart.connekt.commons.services.UserConfigurationService
+import com.flipkart.connekt.commons.services.{TKafkaService, UserConfigurationService}
 import com.flipkart.connekt.commons.tests.CommonsBaseTest
 import com.flipkart.connekt.commons.utils.StringUtils._
 
@@ -31,6 +31,6 @@ class UserConfigurationServiceTest extends CommonsBaseTest {
   }
 
   ignore /*"getTopicNames in MessageService"*/ should "return relevant platform topics" in {
-    ServiceFactory.getMessageService(Channel.PUSH).getTopicNames(Channel.PUSH, Option(MobilePlatform.ANDROID)).get contains clientQueueName shouldEqual true
+    ServiceFactory.getMessageService(Channel.PUSH).asInstanceOf[TKafkaService].getTopicNames(Channel.PUSH, Option(MobilePlatform.ANDROID)).get contains clientQueueName shouldEqual true
   }
 }

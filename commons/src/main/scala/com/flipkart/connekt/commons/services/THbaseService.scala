@@ -12,4 +12,14 @@
  */
 package com.flipkart.connekt.commons.services
 
-trait TMessageService extends TKafkaService with THbaseService {}
+import com.flipkart.connekt.commons.iomodels.ConnektRequest
+
+import scala.util.Try
+
+trait THbaseService extends TService {
+
+  def getRequestInfo(id: String): Try[Option[ConnektRequest]]
+
+  def getRequestInfo(ids: List[String]): Try[List[ConnektRequest]]
+
+}

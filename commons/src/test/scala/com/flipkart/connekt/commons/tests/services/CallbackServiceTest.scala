@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.flipkart.connekt.commons.entities.Channel
 import com.flipkart.connekt.commons.factories.ServiceFactory
 import com.flipkart.connekt.commons.iomodels._
+import com.flipkart.connekt.commons.services.TDataStoreSaveService
 import com.flipkart.connekt.commons.tests.CommonsBaseTest
 import com.flipkart.connekt.commons.utils.StringUtils._
 import org.apache.commons.lang.StringUtils
@@ -58,7 +59,7 @@ class CallbackServiceTest extends CommonsBaseTest {
   )
 
   "Callback Service" should "persist Callback Event" in {
-    mid = ServiceFactory.getMessageService(Channel.PUSH).saveRequest(pnInfo, "fk-connekt-pn").get
+    mid = ServiceFactory.getMessageService(Channel.PUSH).asInstanceOf[TDataStoreSaveService].saveRequest(pnInfo, "fk-connekt-pn", true).get
     callBackEvent = callBackEvent.copy(messageId = mid)
     pnInfo = pnInfo.copy(id = mid)
 
