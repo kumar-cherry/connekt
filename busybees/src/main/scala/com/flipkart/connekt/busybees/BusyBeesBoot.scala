@@ -83,7 +83,7 @@ object BusyBeesBoot extends BaseApp {
       val aeroSpikeCf = ConnektConfig.getConfig("connections.aerospike").getOrElse(ConfigFactory.empty())
       DaoFactory.initAeroSpike(aeroSpikeCf)
 
-      DaoFactory.initReportingDao(DaoFactory.getCouchbaseBucket("StatsReporting"))
+      DaoFactory.initReportingDao(DaoFactory.getCouchbaseBucket(ConnektConfig.getOrElse("couchbase.reporting.bucketname", "StatsReporting")))
 
       ServiceFactory.initStorageService(DaoFactory.getKeyChainDao)
       ServiceFactory.initProjectConfigService(DaoFactory.getUserProjectConfigDao)
@@ -97,13 +97,14 @@ object BusyBeesBoot extends BaseApp {
 
       ServiceFactory.initMessageQueueService(DaoFactory.getMessageQueueDao)
 
-      val eventsDao = EventsDaoContainer(pnEventsDao = DaoFactory.getPNCallbackDao, emailEventsDao = DaoFactory.getEmailCallbackDao, smsEventsDao = DaoFactory.getSmsCallbackDao)
-      val requestDao = RequestDaoContainer(smsRequestDao = DaoFactory.getSmsRequestDao, pnRequestDao = DaoFactory.getPNRequestDao, emailRequestDao = DaoFactory.getEmailRequestDao)
+      val eventsDao = EventsDaoContainer(pnEventsDao = DaoFactory.getPNCallbackDao, emailEventsDao = DaoFactory.getEmailCallbackDao, smsEventsDao = DaoFactory.getSmsCallbackDao, pullEventsDao = DaoFactory.getPullCallbackDao)
+      val requestDao = RequestDaoContainer(smsRequestDao = DaoFactory.getSmsRequestDao, pnRequestDao = DaoFactory.getPNRequestDao, emailRequestDao = DaoFactory.getEmailRequestDao, pullRequestDao = DaoFactory.getPullRequestDao)
       ServiceFactory.initCallbackService(eventsDao, requestDao, kafkaProducerHelper)
 
       ServiceFactory.initPNMessageService(DaoFactory.getPNRequestDao, DaoFactory.getUserConfigurationDao, kafkaProducerHelper, kafkaConnConf, null)
       ServiceFactory.initEmailMessageService(DaoFactory.getEmailRequestDao, DaoFactory.getUserConfigurationDao, kafkaProducerHelper, kafkaConnConf)
       ServiceFactory.initSMSMessageService(DaoFactory.getSmsRequestDao, DaoFactory.getUserConfigurationDao, kafkaProducerHelper, kafkaConnConf, null)
+      ServiceFactory.initPULLMessageService(DaoFactory.getPullRequestDao)
 
       ServiceFactory.initStatsReportingService(DaoFactory.getStatsReportingDao)
       ServiceFactory.initStencilService(DaoFactory.getStencilDao)
