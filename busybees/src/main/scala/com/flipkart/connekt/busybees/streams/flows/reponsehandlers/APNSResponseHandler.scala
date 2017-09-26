@@ -42,7 +42,7 @@ class APNSResponseHandler(implicit m: Materializer, ec: ExecutionContext) extend
     tryResponse match {
       case Success(pushNotificationResponse) =>
 
-        ConnektLogger(LogFile.PROCESSORS).info(s"APNSResponseHandler received http2 response for: ${requestTracker.messageId}")
+        ConnektLogger(LogFile.PROCESSORS).debug(s"APNSResponseHandler received http2 response for: ${requestTracker.messageId}")
 
         pushNotificationResponse.isAccepted match {
           case true =>
@@ -74,7 +74,7 @@ class APNSResponseHandler(implicit m: Materializer, ec: ExecutionContext) extend
         ServiceFactory.getReportingService.recordPushStatsDelta(requestTracker.clientId, Option(requestTracker.contextId), requestTracker.meta.get("stencilId").map(_.toString), Option(MobilePlatform.IOS), requestTracker.appName, InternalStatus.ProviderSendError)
         events += PNCallbackEvent(requestTracker.messageId, requestTracker.clientId, requestTracker.deviceId, InternalStatus.ProviderSendError, MobilePlatform.IOS.toString, requestTracker.appName, requestTracker.contextId, s"APNSResponseHandler-${e.getClass.getSimpleName}-${e.getMessage}")
     }
-    events.persist
+    events.enqueue
     FastFuture.successful(events.toList)
   }
 }

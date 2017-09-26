@@ -44,7 +44,7 @@ class EmailResponseHandler(parallelism:Int)(implicit m: Materializer, ec: Execut
     val maybeEmailCallbackEvent = tryResponse match {
       case Success(emailResponse) =>
         meter(s"${requestTracker.provider}.${emailResponse.responseCode}").mark()
-        ConnektLogger(LogFile.PROCESSORS).info(s"EmailResponseHandler received http response for: ${requestTracker.messageId} with provider messageId : ${emailResponse.messageId} / ${emailResponse.responseCode}, provider: ${requestTracker.provider}")
+        ConnektLogger(LogFile.PROCESSORS).debug(s"EmailResponseHandler received http response for: ${requestTracker.messageId} with provider messageId : ${emailResponse.messageId} / ${emailResponse.responseCode}, provider: ${requestTracker.provider}")
         emailResponse.responseCode match {
           case s if 2 == (s / 100) =>
             //Good!
@@ -72,7 +72,7 @@ class EmailResponseHandler(parallelism:Int)(implicit m: Materializer, ec: Execut
         ServiceFactory.getReportingService.recordChannelStatsDelta(clientId = requestTracker.clientId, contextId = Option(requestTracker.contextId), stencilId = requestTracker.meta.get("stencilId").map(_.toString), channel = Channel.EMAIL, appName = requestTracker.appName, event = InternalStatus.ProviderSendError)
         Left((requestTracker.to ++ requestTracker.cc).map(t => EmailCallbackEvent(requestTracker.messageId, requestTracker.clientId, t, InternalStatus.ProviderSendError, requestTracker.appName, requestTracker.contextId, s"EmailResponseHandler-${e.getClass.getSimpleName}-${e.getMessage}")))
     }
-    maybeEmailCallbackEvent.merge.persist
+    maybeEmailCallbackEvent.merge.enqueue
     maybeEmailCallbackEvent
 
   }

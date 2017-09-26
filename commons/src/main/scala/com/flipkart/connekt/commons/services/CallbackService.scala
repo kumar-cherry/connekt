@@ -50,10 +50,7 @@ class CallbackService(eventsDao: EventsDaoContainer, requestDao: RequestDaoConta
   @Timed("persistCallbackEvent")
   override def persistCallbackEvents(channel: Channel.Value, events: List[CallbackEvent]): Try[List[String]] = {
     Try {
-      val rowKeys = eventsDao(channel).asyncSaveCallbackEvents(events)
-      enqueueCallbackEvents(events, CALLBACK_QUEUE_NAME.format(channel.toString.toLowerCase)).get
-      ConnektLogger(LogFile.SERVICE).debug(s"Event saved with rowKeys $rowKeys")
-      rowKeys
+      eventsDao(channel).asyncSaveCallbackEvents(events)
     }
   }
 

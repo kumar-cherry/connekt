@@ -46,7 +46,7 @@ class XmppDownstreamHandler(implicit m: Materializer, ec: ExecutionContext) exte
 
     val (responseStatus, responseMessage) = xmppResponse match {
       case Success(response: XmppAck) =>
-        ConnektLogger(LogFile.PROCESSORS).info(s"XmppDownstreamHandler received xmpp response for: $messageId")
+        ConnektLogger(LogFile.PROCESSORS).debug(s"XmppDownstreamHandler received xmpp response for: $messageId")
         if (response.updatedTokenId != null) {
           DeviceDetailsService.get(appName, deviceId).foreach(_.foreach(d => {
             ConnektLogger(LogFile.PROCESSORS).info(s"XmppDownstreamHandler device token update notified on. $messageId of device: $deviceId")
@@ -82,7 +82,7 @@ class XmppDownstreamHandler(implicit m: Materializer, ec: ExecutionContext) exte
       requestTracker.appName,
       responseStatus)
     val events = List(PNCallbackEvent(messageId, requestTracker.clientId, deviceId, responseStatus, MobilePlatform.ANDROID, appName, requestTracker.contextId, responseMessage, eventTS))
-    events.persist
+    events.enqueue
     events
   })(m.executionContext)
 }

@@ -49,7 +49,7 @@ class OpenWebResponseHandler(implicit m: Materializer, ec: ExecutionContext) ext
       case Success(r) =>
         try {
           val stringResponse = r.entity.getString(m)
-          ConnektLogger(LogFile.PROCESSORS).info(s"OpenWebResponseHandler received http response for: $messageId")
+          ConnektLogger(LogFile.PROCESSORS).debug(s"OpenWebResponseHandler received http response for: $messageId")
           ConnektLogger(LogFile.PROCESSORS).trace(s"OpenWebResponseHandler received http response for: $messageId http [${r.status.intValue()}] response body: $stringResponse, headers: ${r.headers}")
           r.status.intValue() match {
             case 201 =>
@@ -99,7 +99,7 @@ class OpenWebResponseHandler(implicit m: Materializer, ec: ExecutionContext) ext
         ConnektLogger(LogFile.PROCESSORS).error(s"OpenWebResponseHandler  send failure for: $messageId", e2)
     }
 
-    events.persist
+    events.enqueue
     events.toList
   })(m.executionContext)
 }
