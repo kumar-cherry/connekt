@@ -1,0 +1,7 @@
+Package: fk-connekt-alerts
+Version: 1._VERSION_
+Architecture: all
+Maintainer: CE Team <ce-devs@flipkart.com>
+Depends: oracle-j2sdk1.8,fk-ops-servicebuilder,fk-nsca-wrapper
+Section: flipkart/w3
+Description: Connekt alerts

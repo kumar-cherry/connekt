@@ -1,0 +1,53 @@
+#! /bin/bash -ex
+
+PAC="fk-connekt-alerts"
+PAC_UID=4000
+PAC_GID=4001
+PAC_GROUP="fk-connekt"
+PAC_USER="fk-connekt-alerts"
+
+function service_builder {
+    service_name=$1
+    script_path=$2
+
+    /usr/share/fk-ops-servicebuilder/servicebuilder.pl -N $service_name -R /usr/share/$PAC/$script_path
+    chmod 755 /etc/service/$service_name/run
+    svc -u /etc/service/$service_name
+}
+
+if [ "${1}" == "configure" ] ; then
+
+    #creating user if it doesnt exist
+    if ! getent group "$PAC_GROUP" > /dev/null; then
+    	groupadd -g "$PAC_GID" "$PAC_GROUP"
+    fi
+
+    if ! getent passwd $PAC_UID > /dev/null; then
+        adduser --system --uid $PAC_UID --home /usr/share/$PAC --no-create-home \
+        --ingroup "$PAC_GROUP" --disabled-password --shell /bin/false \
+        $PAC_USER
+    fi
+
+    # Create directory if needed
+     for f in  /var/log/flipkart/$PAC /var/run/flipkart/$PAC /usr/share/$PAC ; do
+     chown -Rf $PAC_USER:$PAC_GROUP "$f" || true
+     chmod -R 777 $f || true
+     done
+
+
+    source /etc/profile.d/alerts.sh
+
+    #make init file executable
+    chmod +x /etc/init.d/$PAC || true
+
+    if [ -f "/usr/share/fk-ops-servicebuilder/servicebuilder.pl" ]; then
+        if [ $SVC == 'receptors' ]; then
+            service_builder fk-connekt-rotation-alerts rotationCheck_scripts/rotation_status.sh
+            service_builder fk-connekt-processUP-alerts processCheck_scripts/process_status.sh
+        elif [ $SVC == 'processUP' ]; then
+            service_builder fk-connekt-processUP-alerts processCheck_scripts/process_status.sh
+        fi
+        echo "Custom alerts are active now!"
+    fi
+fi
+
