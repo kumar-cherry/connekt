@@ -59,7 +59,7 @@ class InternalTopologyManager(kafkaConsumerConnConf: Config)(implicit am: ActorM
   }
 }
 
-private object InternalTopologyManager {
+object InternalTopologyManager {
   var instance: InternalTopologyManager = _
 
   def apply(kafkaConsumerConnConf: Config)(implicit am: ActorMaterializer, sys: ActorSystem): InternalTopologyManager = {

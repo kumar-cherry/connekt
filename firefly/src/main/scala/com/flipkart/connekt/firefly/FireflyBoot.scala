@@ -78,7 +78,7 @@ object FireflyBoot extends BaseApp {
 
       HttpDispatcher.apply(ConnektConfig.getConfig("react").get)
 
-      ClientTopologyManager(kafkaConnConf, ConnektConfig.getInt("firefly.retry.limit").get)
+//      ClientTopologyManager(kafkaConnConf, ConnektConfig.getInt("firefly.retry.limit").get)
 
       InternalTopologyManager(kafkaConnConf)
 
