@@ -51,7 +51,7 @@ class LatencyMetrics extends Instrumented {
       if (!excludedEvents.contains(sce.eventType.toLowerCase)) {
         val tryCargoMap = Try(sce.cargo.getObj[Map[String, String]])
         tryCargoMap match {
-          case Success(cargoMap) if Try(cargoMap("provider")).isSuccess && Try(cargoMap("deliveredTS")).isSuccess =>
+          case Success(cargoMap) if Try(cargoMap("provider")).isSuccess =>
             val providerName = cargoMap("provider")
             meter(s"${sce.appName}.$providerName.${sce.eventType}").mark()
             if (sce.eventType.equalsIgnoreCase(SmsResponseStatus.Delivered) && publishSMSLatency && cargoMap.nonEmpty) {
