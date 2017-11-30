@@ -76,24 +76,24 @@ class LatencyMetrics extends Instrumented {
                         val receivedTs = receivedEvent.head.asInstanceOf[SmsCallbackEvent].timestamp
                         val diff = deliveredTS - receivedTs
                         slidingTimer(getMetricName(s"sms.latency.${receivedEvent.head.appName}.$providerName")).update(diff, TimeUnit.MILLISECONDS)
-                        ConnektLogger(LogFile.SERVICE).trace(s"Metrics.LatencyMetrics for $messageId is ingested into cosmos")
+                        ConnektLogger(LogFile.SERVICE).debug(s"Metrics.LatencyMetrics for $messageId is ingested into cosmos")
                       }
                     })
                   case Success(details) =>
-                    ConnektLogger(LogFile.SERVICE).trace(s"Events not available: fetchCallbackEventByMId for messageId : $messageId")
+                    ConnektLogger(LogFile.SERVICE).debug(s"Events not available: fetchCallbackEventByMId for messageId : $messageId")
                   case Failure(f) =>
-                    ConnektLogger(LogFile.SERVICE).trace(s"Events fetch failed fetchCallbackEventByMId for messageId : $messageId with error : ", f)
+                    ConnektLogger(LogFile.SERVICE).error(s"Events fetch failed fetchCallbackEventByMId for messageId : $messageId with error : ", f)
                 }
               }
             }
           case Success(cargoMap) =>
-            ConnektLogger(LogFile.SERVICE).trace(s"Events fetch null providerName for cargo: ${sce.cargo} messageId : $messageId")
+            ConnektLogger(LogFile.SERVICE).debug(s"Events fetch null providerName for cargo: ${sce.cargo} messageId : $messageId")
           case Failure(f) =>
             ConnektLogger(LogFile.SERVICE).error(s"Erroneous cargo value for messageId : $messageId with error : ", f)
         }
       }
       else {
-        ConnektLogger(LogFile.SERVICE).trace(s"Event: ${sce.eventType} is in the exclusion list for metrics publish, messageID: $messageId")
+        ConnektLogger(LogFile.SERVICE).debug(s"Event: ${sce.eventType} is in the exclusion list for metrics publish, messageID: $messageId")
       }
     case _ => ConnektLogger(LogFile.SERVICE).info(s"LatencyMetrics for channel callback event not implemented yet.")
   }
