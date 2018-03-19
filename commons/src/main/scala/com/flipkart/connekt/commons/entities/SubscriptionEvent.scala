@@ -12,8 +12,4 @@
  */
 package com.flipkart.connekt.commons.entities
 
-case class SubscriptionEvent(
-                              destination:String = null,
-                              header: Map[String,String] = null,
-                              payload: AnyRef = null
-                            )
+case class SubscriptionEvent(destination:String = null, header: Map[String,String] = null, payload: AnyRef = null)

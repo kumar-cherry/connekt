@@ -52,7 +52,7 @@ class StencilService(stencilDao: TStencilDao) extends TStencilService with Instr
   }
 
   @Timed("render")
-  def materialize(stencil: Stencil, req: ObjectNode, logRef: Option[String] = None): AnyRef = {
+  def materialize(stencil: Stencil, req: ObjectNode): AnyRef = {
     LocalCacheManager.getCache(LocalCacheType.EngineFabrics).get[EngineFabric](fabricCacheKey(stencil.id, stencil.component, stencil.version.toString)).orElse {
       val fabric = stencil.engine match {
         case StencilEngine.GROOVY =>
@@ -62,7 +62,7 @@ class StencilService(stencilDao: TStencilDao) extends TStencilService with Instr
       }
       LocalCacheManager.getCache(LocalCacheType.EngineFabrics).put[EngineFabric](fabricCacheKey(stencil.id, stencil.component, stencil.version.toString), fabric)
       Option(fabric)
-    }.map(_.compute(s"${stencil.id} : ${logRef.getOrElse("")}", req)).orNull
+    }.map(_.compute(stencil.id, req)).orNull
   }
 
   @Timed("add")

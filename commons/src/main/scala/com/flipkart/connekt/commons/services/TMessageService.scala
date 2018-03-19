@@ -20,9 +20,7 @@ import scala.util.Try
 
 trait TMessageService extends TService {
 
-  def saveRequest(request: ConnektRequest, requestBucket: String): Try[String]
-
-  def bulkPersist(requests: List[ConnektRequest]): List[String]
+  def saveRequest(request: ConnektRequest, requestBucket: String, persistPayloadInDataStore: Boolean = true): Try[String]
 
   def getRequestBucket(request: ConnektRequest, client: AppUser): String
 

@@ -12,11 +12,4 @@
  */
 package com.flipkart.connekt.busybees.models
 
-case class GCMRequestTracker(
-                              override val messageId: String,
-                              clientId: String,
-                              deviceId: Seq[String],
-                              appName: String,
-                              contextId: String,
-                              meta: Map[String, Any]
-                            ) extends RequestTracker
+case class GCMRequestTracker(override val messageId: String, clientId: String, deviceId: Seq[String], appName: String, contextId: String, meta: Map[String, Any]) extends RequestTracker

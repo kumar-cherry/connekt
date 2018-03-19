@@ -18,8 +18,6 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 
 
-sealed class SimpleConfig extends TConfig
-
 object ConnektConfig {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
@@ -34,9 +32,8 @@ object ConnektConfig {
           configLoaderClass.getMethod("init").invoke(instance)
         } catch {
           case e: Exception =>
-            logger.warn("Failed to init KloudConfig, fallback to user-defined conf file usage.")
+            logger.error("Failed to init KloudConfig, fallback to user-defined conf file usage.", e)
             val config = ConfigFactory.parseResources(configFile)
-            instance = new SimpleConfig()
             instance.applyConfig(config)
         }
       }

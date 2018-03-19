@@ -21,11 +21,13 @@ import com.flipkart.connekt.commons.entities.{AppUser, Channel}
 import com.flipkart.connekt.commons.factories.{ConnektLogger, LogFile}
 import com.flipkart.connekt.commons.helpers.{KafkaConnectionHelper, KafkaProducerHelper}
 import com.flipkart.connekt.commons.iomodels.ConnektRequest
-import com.flipkart.connekt.commons.helpers.ConnektRequestHelper._
 import com.flipkart.connekt.commons.services.SchedulerService.ScheduledRequest
 import com.flipkart.connekt.commons.utils.StringUtils._
-import com.typesafe.config.Config
 import com.roundeights.hasher.Implicits._
+import com.typesafe.config.Config
+import kafka.utils.{ZKStringSerializer, ZkUtils}
+import org.I0Itec.zkclient.ZkClient
+
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
@@ -35,7 +37,7 @@ class MessageService(requestDao: TRequestDao, userConfigurationDao: TUserConfigu
   private val queueProducer: KafkaProducerHelper = queueProducerHelper
   private val clientRequestTopics = scala.collection.mutable.Map[String, String]()
 
-  override def saveRequest(request: ConnektRequest, requestBucket: String): Try[String] = {
+  override def saveRequest(request: ConnektRequest, requestBucket: String, persistPayloadInDataStore: Boolean): Try[String] = {
     try {
       val reqWithId = request.copy(id = generateUUID)
       request.scheduleTs match {
@@ -43,12 +45,11 @@ class MessageService(requestDao: TRequestDao, userConfigurationDao: TUserConfigu
           schedulerService.client.add(ScheduledRequest(reqWithId, requestBucket), scheduleTime)
           ConnektLogger(LogFile.SERVICE).info(s"Scheduled request ${reqWithId.id} at $scheduleTime to $requestBucket")
         case _ =>
-          queueProducer.writeMessages(requestBucket, Tuple2(reqWithId.kafkaKey, reqWithId.getJson))
+          queueProducer.writeMessages(requestBucket, Tuple2(reqWithId.id, reqWithId.getJson))
           ConnektLogger(LogFile.SERVICE).debug(s"Saved request ${reqWithId.id} to $requestBucket")
       }
 
-      queueProducer.writeMessages(s"connekt_request_hbase_sink_${reqWithId.channel}", Tuple2(reqWithId.kafkaKey, reqWithId.getJson))
-      ConnektLogger(LogFile.SERVICE).info(s"Saved request ${reqWithId.id} to connekt_request_hbase_sink_${reqWithId.channel}")
+      messageDao.saveRequest(reqWithId.id, reqWithId, persistPayloadInDataStore)
       Success(reqWithId.id)
     } catch {
       case e: Exception =>
@@ -56,9 +57,6 @@ class MessageService(requestDao: TRequestDao, userConfigurationDao: TUserConfigu
         Failure(e)
     }
   }
-
-  override def bulkPersist(requests: List[ConnektRequest]): List[String] =
-    messageDao.saveBulkRequests(requests)
 
   override def enqueueRequest(request: ConnektRequest, requestBucket: String): Unit = {
     queueProducer.writeMessages(requestBucket, Tuple2(request.id,request.getJson))

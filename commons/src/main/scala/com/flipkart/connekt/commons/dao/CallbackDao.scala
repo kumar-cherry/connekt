@@ -73,14 +73,15 @@ abstract class CallbackDao(tableName: String, hTableFactory: THTableFactory) ext
   override def saveCallbackEvents(events: List[CallbackEvent]): List[String] = {
     implicit val hTableInterface = hTableConnFactory.getTableInterface(hTableName)
     try {
-      val rows = events.map(e => {
-        val rawData = Map[String, ColumnData](columnFamily -> channelEventPropsMap(e))
+      val rowKeys = events.map(e => {
+        val channelEventProps = channelEventPropsMap(e)
+        val rawData = Map[String, ColumnData](columnFamily -> channelEventProps)
         val rowKey = s"${e.contactId.sha256.hash.hex}:${e.messageId}:${e.eventId}"
-        rowKey -> rawData
+        addRow(rowKey, rawData)
+        e.messageId
       })
-      addRows(rows)
-      ConnektLogger(LogFile.DAO).debug(s"Events details persisted with rowkeys {}", supplier(rows.map(_._1).mkString(",")))
-      rows.map(_._1)
+      ConnektLogger(LogFile.DAO).debug(s"Events details persisted with rowkeys {}", supplier(rowKeys.mkString(",")))
+      rowKeys
     } catch {
       case e: IOException =>
         ConnektLogger(LogFile.DAO).error(s"Events details persistence failed for ${events.getJson} ${e.getMessage}", e)

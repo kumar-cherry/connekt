@@ -19,7 +19,6 @@ object Channel extends Enumeration {
   type Channel = Value
   val PUSH = Value("push")
   val EMAIL = Value("email")
-  val WA = Value("wa")
   val SMS = Value("sms")
   val CARDS = Value("cards")
   val OPENWEB = Value("openweb")
